@@ -5,7 +5,16 @@ const palettes = require('nice-color-palettes');
 
 random.setSeed(random.getRandomSeed());
 
-console.log(random.getSeed());
+function showText(text) {
+  const div = document.createElement('div');
+  div.style.position = 'fixed';
+  div.style.bottom = '8px';
+  div.style.right = '8px';
+  div.textContent = text;
+  document.body.appendChild(div);
+}
+
+showText(random.getSeed());
 
 const palette = random.pick(palettes);
 
@@ -13,13 +22,21 @@ const settings = {
   dimensions: [2048, 2048]
 };
 
-function createGrid(count) {
+const frequency = 3;
+const amplitude = 0.07;
+function createGrid(count, withNoise = false) {
   const points = [];
-  for (let x = 0; x < count; x++) {
-    for (let y = 0; y < count; y++) {
-      const u = count <= 1 ? 0.5 : x / (count - 1);
-      const v = count <= 1 ? 0.5 : y / (count - 1);
-      points.push({ position: [u, v], color: random.pick(palette) });
+  for (let i = 0; i < count; i++) {
+    for (let j = 0; j < count; j++) {
+      const u = count <= 1 ? 0.5 : i / (count - 1);
+      const v = count <= 1 ? 0.5 : j / (count - 1);
+      const dif = withNoise ? amplitude * random.noise2D(u * frequency, v * frequency) : 0;
+      const x = u + dif;
+      const y = v + dif;
+      points.push({
+        position: [x, y],
+        color: random.pick(palette)
+      });
     }
   }
   return points;
@@ -48,10 +65,8 @@ function drawCircle(
 }
 
 const sketch = () => {
-  const points = createGrid(40);
+  const points = createGrid(40, true);
   const radius = 0.005;
-  const frequency = 1;
-  const amplitude = 0.5;
 
   return ({ context, width, height }) => {
     const margin = width * 0.05;
@@ -59,15 +74,14 @@ const sketch = () => {
     context.fillRect(0, 0, width, height);
 
     points
-      // .filter(() => Math.abs(random.gaussian()) > 0.5)
+      .filter(() => Math.abs(random.gaussian()) > 0.4)
       .forEach(({ position: [u, v], color }) => {
-        const n = amplitude * random.noise2D(u * frequency, v * frequency);
-        const x = lerp(margin, width - margin, u + n);
-        const y = lerp(margin, height - margin, v + n);
+        const x = lerp(margin, width - margin, u);
+        const y = lerp(margin, height - margin, v);
         drawCircle(context, {
           x,
           y,
-          radius: radius * width * Math.abs(random.gaussian()),
+          radius: radius * width * (Math.abs(random.gaussian()) + 0.1),
           stroke: 'black',
           fill: color,
           width: width * 0.005
