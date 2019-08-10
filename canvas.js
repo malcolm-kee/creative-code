@@ -1,5 +1,13 @@
 const canvasSketch = require('canvas-sketch');
 const { lerp } = require('canvas-sketch-util/math');
+const random = require('canvas-sketch-util/random');
+const palettes = require('nice-color-palettes');
+
+random.setSeed(random.getRandomSeed());
+
+console.log(random.getSeed());
+
+const palette = random.pick(palettes);
 
 const settings = {
   dimensions: [2048, 2048]
@@ -11,7 +19,7 @@ function createGrid(count) {
     for (let y = 0; y < count; y++) {
       const u = count <= 1 ? 0.5 : x / (count - 1);
       const v = count <= 1 ? 0.5 : y / (count - 1);
-      points.push([u, v]);
+      points.push({ position: [u, v], color: random.pick(palette) });
     }
   }
   return points;
@@ -40,26 +48,31 @@ function drawCircle(
 }
 
 const sketch = () => {
-  const points = createGrid(5);
-  const radius = 0.03;
+  const points = createGrid(40);
+  const radius = 0.005;
+  const frequency = 1;
+  const amplitude = 0.5;
 
   return ({ context, width, height }) => {
-    const margin = width * 0.1;
+    const margin = width * 0.05;
     context.fillStyle = 'white';
     context.fillRect(0, 0, width, height);
 
-    points.forEach(([u, v]) => {
-      const x = lerp(margin, width - margin, u);
-      const y = lerp(margin, height - margin, v);
-      drawCircle(context, {
-        x,
-        y,
-        radius: radius * width,
-        stroke: 'black',
-        fill: 'pink',
-        width: width * 0.01
+    points
+      // .filter(() => Math.abs(random.gaussian()) > 0.5)
+      .forEach(({ position: [u, v], color }) => {
+        const n = amplitude * random.noise2D(u * frequency, v * frequency);
+        const x = lerp(margin, width - margin, u + n);
+        const y = lerp(margin, height - margin, v + n);
+        drawCircle(context, {
+          x,
+          y,
+          radius: radius * width * Math.abs(random.gaussian()),
+          stroke: 'black',
+          fill: color,
+          width: width * 0.005
+        });
       });
-    });
   };
 };
 
