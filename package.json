@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "new": "canvas-sketch --new --open"
+    "start": "canvas-sketch canvas.js --open"
   },
   "devDependencies": {
     "canvas-sketch-cli": "^1.9.1"
